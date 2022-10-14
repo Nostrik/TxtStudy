@@ -1,0 +1,24 @@
+Реализация концепции AR существует во многих средах разработки для различных языков программирования. Например, если в базе данных есть таблица parts с полями name (string type) и price (number type), и шаблон Active Record реализован в классе Part, то следующий псевдокод:
+
+part = new Part()
+part.name = "Sample part"
+part.price = 123.45
+part.save()
+создаст новую запись в таблице parts с данными значениями, и будет примерно соответствовать SQL команде
+
+INSERT INTO parts (name, price) VALUES ('Sample part', 123.45);
+С другой стороны, класс может быть использован для запросов к базе данных:
+
+b = Part.find_first("name", "gearbox")
+Этот код создаст новый экземпляр класса Part, основанный на данных первой найденной записи в таблице parts у которой поле name равно «gearbox».
+
+Команда SQL может быть подобна одной из показанных ниже, в зависимости от реализации SQL в конкретной базе данных:
+
+SELECT * FROM parts WHERE name = 'gearbox' LIMIT 1; -- MySQL or PostgreSQL
+или
+
+SELECT * FROM parts WHERE name = 'gearbox' and rownum < 2; -- Oracle
+или
+
+SELECT TOP 1 * FROM parts WHERE name = 'gearbox'; -- Microsoft SQL Server
+Примеры реализации: Yii[3] и Kohana для PHP. Следует отметить фреймворк CodeIgniter, который имеет встроенный класс ActiveRecord, являющийся конструктором запросов к базе данных, но не являющийся примером реализации шаблона Active Record.
