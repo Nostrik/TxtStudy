@@ -1,0 +1,22 @@
+Event представляет собой простой механизм реализации связи между потоками: один поток даёт сигнал о событии, другие ожидают этого сигнала.
+
+Объект события управляет внутренним флагом, который может быть установлен в True или False с помощью методов set() и clear(). Также есть методы is_set(), которым можно проверить состояние внутреннего флага. С помощью метода wait(timeout=None) можно ждать пока не выставлен флаг в True. Так же при необходимости можно задать время ожидания.
+
+Вот пример:
+
+import threading
+import time
+event = threading.Event()
+def myfunc():
+    time.sleep(1)
+    event.set()
+thr1 = threading.Thread(target = myfunc).start()
+print(event.is_set())
+event.wait()
+print(event.is_set())
+event.clear()
+print(event.is_set())
+
+False
+True
+False
