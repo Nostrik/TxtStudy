@@ -1,0 +1,91 @@
+В качестве веб-фреймворка у нас используется Flask. Документацию для API, созданного с помощью него, мы и хотим создать. Спецификация по стандарту OpenAPI описывается форматом YAML(или JSON). Чтобы преобразовать докстринги нашего API в необходимый формат, будем использовать такой инструмент, как apispec, и его плагины. Например, MarshmallowPlugin, с помощью которого (и самой библиотеки marshmallow) можно удобно — за счет возможности наследования и переиспользования — описать входные и выходные данные эндпоинтов в виде python классов, а также провалидировать их.
+
+Используя библиотеку marshmallow, создадим класс, описывающий параметры API:
+
+from marshmallow import Schema, fields
+
+class InputSchema(Schema):
+   number = fields.Int(description="Число", required=True, example=5)
+   power = fields.Int(description="Степень", required=True, example=2)
+
+Аналогично сделаем для выходных параметров:
+
+class OutputSchema(Schema):
+   result = fields.Int(description="Результат", required=True, example=25)
+
+Для группировки запросов в OpenAPI используются теги. Создадим тег и добавим его в объект APISpec:
+
+def create_tags(spec):
+   """ Создаем теги.
+
+   :param spec: объект APISpec для сохранения тегов
+   """
+   tags = [{'name': 'math', 'description': 'Математические функции'}]
+
+   for tag in tags:
+       print(f"Добавляем тег: {tag['name']}")
+       spec.tag(tag)
+
+Далее нам нужно интегрировать параметры в докстринг так, чтобы это соответствовало OpenAPI спецификации
+
+Пример:
+
+from flask import Blueprint, current_app, json, request
+
+blueprint_power = Blueprint(name="power", import_name=__name__)
+
+
+@blueprint_power.route('/power')
+def power():
+   """
+   ---
+   get:
+     summary: Возводит число в степень
+     parameters:
+       - in: query
+         schema: InputSchema
+     responses:
+       '200':
+         description: Результат возведения в степень
+         content:
+           application/json:
+             schema: OutputSchema
+       '400':
+         description: Не передан обязательный параметр
+         content:
+           application/json:
+             schema: ErrorSchema
+     tags:
+       - math
+   """
+   args = request.args
+
+   number = args.get('number')
+   if number is None:
+       return current_app.response_class(
+           response=json.dumps(
+               {'error': 'Не передан параметр number'}
+           ),
+           status=400,
+           mimetype='application/json'
+       )
+
+   power = args.get('power')
+   if power is None:
+       return current_app.response_class(
+           response=json.dumps(
+               {'error': 'Не передан параметр power'}
+           ),
+           status=400,
+           mimetype='application/json'
+       )
+
+   return current_app.response_class(
+       response=json.dumps(
+           {'response': int(number)**int(power)}
+       ),
+       status=200,
+       mimetype='application/json'
+   )
+
+Эта функция — пример реализации метода GET в нашем API.

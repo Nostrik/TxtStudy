@@ -1,0 +1,41 @@
+Если мы не хотим формировать документацию во время обращения по эндпоинту, то можно собрать статичный документ.
+
+Использование GitLab позволяет сгенерировать такую статическую страницу с документацией в CICD процессах.
+
+Таким образом, мы один раз соберем документацию, и при обращении по заданному адресу она будет просто отображаться без какой-либо дополнительной обработки.
+
+Для этого сохраним APISpec в YAML файл
+
+DOCS_FILENAME = 'docs.yaml'
+
+def write_yaml_file(spec APISpec)
+    Экспортируем объект APISpec в YAML файл.
+
+   param spec объект APISpec
+   
+   with open(DOCS_FILENAME, 'w') as file
+       file.write(spec.to_yaml())
+   print(f'Сохранили документацию в {DOCS_FILENAME}’)
+
+Теперь, когда мы получили YAML файл по спецификации OpenAPI, нужно сформировать HTML документ. Для этого будем использовать ReDoc, так как он позволяет сгенерировать документ в gitlab-ci с красивой и удобной структурой. Публиковать его будем с помощью GitLab Pages.
+
+Добавим следующие строки в файл gitlab-ci.yml
+
+pages
+ stage docs
+ image alpinelatest
+ script
+   - apk add --update nodejs npm
+   - npm install -g redoc-cli
+   - redoc-cli bundle -o publicindex.html docs.yaml
+ artifacts
+   paths
+     - public
+
+Стоит отметить, что index.html нужно сохранять в папку public, так как она зарезервирована GitLab’ом.
+
+Теперь, если мы запушим изменения в репозиторий, по адресу namespace.gitlab.comproject появится документация
+
+Также путь до документации можно посмотреть в Settings/Pages
+
+Пример документации с использованием ReDoc: ivi-ru.github.io/hydra

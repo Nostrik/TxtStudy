@@ -1,0 +1,59 @@
+Блок summary. Краткое описание функции. Для более подробного описания можно добавить блок description.
+
+Блок parameters. Описание параметров запроса. У параметра указывается, откуда он берется:
+
+path, для /power/{number}
+query, для /power?number=5
+header, для X-MyHeader: Value
+cookie, для параметров переданных в cookie файле
+
+и schema, в которую передается python класс, описывающий данный параметр.
+
+Блок responses. Описание вариантов ответа команды и их структура.
+
+Блок tags. Описание тегов, которые используются для логической группировки эндпоинтов.
+
+Для POST запроса, например, можно указать еще requestBody, в котором описываются параметры, передаваемые в теле. Подробнее можно почитать в официальной документации.
+
+После того, как мы описали методы API, можем загрузить их описание в объект APISpec:
+
+def load_docstrings(spec, app):
+   """ Загружаем описание API.
+
+   :param spec: объект APISpec, куда загружаем описание функций
+   :param app: экземпляр Flask приложения, откуда берем описание функций
+   """
+   for fn_name in app.view_functions:
+       if fn_name == 'static':
+           continue
+       print(f'Загружаем описание для функции: {fn_name}')
+       view_fn = app.view_functions[fn_name]
+       spec.path(view=view_fn)
+
+Создаем метод get_apispec, который будет возвращать объект APISpec, в нем добавляем общую информацию о проекте и вызываем описанные ранее методы load_docstrings и create_tags:
+
+from apispec import APISpec
+from apispec.ext.marshmallow import MarshmallowPlugin
+from apispec_webframeworks.flask import FlaskPlugin
+
+def get_apispec(app):
+   """ Формируем объект APISpec.
+
+   :param app: объект Flask приложения
+   """
+   spec = APISpec(
+       title="My App",
+       version="1.0.0",
+       openapi_version="3.0.3",
+       plugins=[FlaskPlugin(), MarshmallowPlugin()],
+   )
+
+   spec.components.schema("Input", schema=InputSchema)
+   spec.components.schema("Output", schema=OutputSchema)
+   spec.components.schema("Error", schema=ErrorSchema)
+
+   create_tags(spec)
+
+   load_docstrings(spec, app)
+
+   return spec
